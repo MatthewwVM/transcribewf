@@ -137,8 +137,6 @@ All settings are in the `.env` file. See `.env.example` for detailed documentati
 - ⏱️ Slower processing (~2-3x vanilla Whisper)
 - 🔑 Requires HuggingFace token for speaker diarization
 
-See [WHISPERX_SETUP.md](WHISPERX_SETUP.md) for detailed setup instructions.
-
 ### Whisper Model Sizes
 
 | Model | Speed | Accuracy | RAM Required | Time (10min audio) |
@@ -189,31 +187,6 @@ For each audio file `recording.m4a`, the workflow creates:
 - `recording_TIMESTAMP.md` - AI-generated markdown note with summary
 - `recording.m4a` - Original file (moved to transcribed folder)
 
-### Example Output with Speaker Diarization
-
-**Transcript (TXT):**
-```
-[SPEAKER_00]: Hey everyone, thanks for joining today's call.
-
-[SPEAKER_01]: Thanks Matt. We're looking at FlashArray for our VMware environment.
-
-[SPEAKER_00]: Great! Let me walk you through the key features...
-```
-
-**Markdown Note (MD):**
-```markdown
-## Attendees
-- Matt Webb (Pure Storage FSA)
-- Customer: IT Manager
-
-## Executive Summary
-Customer exploring FlashArray for VMware infrastructure...
-
-## Key Requirements
-- 100K IOPS minimum
-- Sub-millisecond latency
-...
-```
 
 ## Supported Audio Formats
 
