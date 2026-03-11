@@ -1,0 +1,24 @@
+[Unit]
+Description=Audio Transcription Workflow Service
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=matt
+Group=matt
+WorkingDirectory=/home/matt/whisper/whisper-env/transcribe-workflow
+Environment="PATH=/home/matt/whisper/whisper-env/bin:/usr/local/bin:/usr/bin:/bin"
+ExecStart=/home/matt/whisper/whisper-env/bin/python3 /home/matt/whisper/whisper-env/transcribe-workflow/transcribe_workflow.py
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=transcribe-workflow
+
+# Security settings
+PrivateTmp=yes
+# NoNewPrivileges disabled to allow sudo for NFS mounting
+# NoNewPrivileges=yes
+
+[Install]
+WantedBy=multi-user.target
+

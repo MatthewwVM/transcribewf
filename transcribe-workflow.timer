@@ -1,0 +1,14 @@
+[Unit]
+Description=Daily Audio Transcription Workflow Timer
+Requires=transcribe-workflow.service
+
+[Timer]
+# Run daily at 8:00 AM UTC (midnight PST/PDT)
+OnCalendar=*-*-* 08:00:00
+# Adjust for PST (UTC-8) - use 08:00 for standard time, 07:00 for daylight time
+AccuracySec=1min
+Persistent=true
+
+[Install]
+WantedBy=timers.target
+
