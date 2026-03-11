@@ -66,6 +66,9 @@ USE_WHISPERX = os.getenv('USE_WHISPERX', 'false').lower() in ('true', '1', 'yes'
 ENABLE_SPEAKER_DIARIZATION = os.getenv('ENABLE_SPEAKER_DIARIZATION', 'false').lower() in ('true', '1', 'yes')
 HUGGINGFACE_TOKEN = os.getenv('HUGGINGFACE_TOKEN', '')
 
+# Ollama Prompt Template
+OLLAMA_PROMPT_TEMPLATE = os.getenv('OLLAMA_PROMPT_TEMPLATE', '')
+
 # Setup logging
 logging.basicConfig(
     level=getattr(logging, LOG_LEVEL.upper()),
@@ -256,9 +259,17 @@ def generate_markdown_with_ollama(transcription_text, audio_filename):
     # Check if transcript has speaker labels
     has_speakers = '[SPEAKER_' in transcription_text or '[Speaker ' in transcription_text
 
-    speaker_instructions = ""
-    if has_speakers:
-        speaker_instructions = """
+    # Use custom prompt template if provided, otherwise use default
+    if OLLAMA_PROMPT_TEMPLATE:
+        # Replace placeholders in custom template
+        prompt = OLLAMA_PROMPT_TEMPLATE.replace('{audio_filename}', audio_filename)
+        prompt = prompt.replace('{transcription_text}', transcription_text)
+        prompt = prompt.replace('{has_speakers}', 'true' if has_speakers else 'false')
+    else:
+        # Default prompt template
+        speaker_instructions = ""
+        if has_speakers:
+            speaker_instructions = """
 IMPORTANT - Speaker Labels:
 The transcript includes speaker labels like [SPEAKER_00], [SPEAKER_01], etc.
 - Identify which speaker is Matt Webb (usually the one presenting Pure Storage content)
@@ -268,7 +279,7 @@ The transcript includes speaker labels like [SPEAKER_00], [SPEAKER_01], etc.
 - When customers speak, capture detailed requirements, questions, and concerns
 """
 
-    prompt = f"""You are an expert technical note taker for Matt Webb, a Field Solutions Architect at Pure Storage specializing in Virtualization Infrastructure.
+        prompt = f"""You are an expert technical note taker for Matt Webb, a Field Solutions Architect at Pure Storage specializing in Virtualization Infrastructure.
 
 {speaker_instructions}
 

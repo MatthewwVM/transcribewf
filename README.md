@@ -114,8 +114,9 @@ All settings are in the `.env` file. See `.env.example` for detailed documentati
 | `MOUNT_POINT` | Local mount directory | `/mnt/rotation` |
 | `SOURCE_FOLDER` | Folder with files to transcribe | `totranscribe` |
 | `DEST_FOLDER` | Folder for processed files | `transcribed` |
-| `WHISPER_MODEL` | Whisper model size | `base` |
-| `OLLAMA_MODEL` | Ollama model name | `llama2` |
+| `WHISPER_MODEL` | Whisper model size | `tiny` |
+| `OLLAMA_MODEL` | Ollama model name | `qwen2.5:14b` |
+| `OLLAMA_PROMPT_TEMPLATE` | Custom prompt for note generation | (empty = use default) |
 | `LOG_FILE` | Log file location | `/var/log/transcribe_workflow.log` |
 | `LOG_LEVEL` | Logging verbosity | `INFO` |
 | `ENABLE_OLLAMA` | Enable AI note generation | `true` |
@@ -148,6 +149,43 @@ All settings are in the `.env` file. See `.env.example` for detailed documentati
 | large | Slowest | Best | ~10 GB | ~10min |
 
 **Note:** WhisperX with speaker diarization adds ~60-90s processing time.
+
+### Customizing AI Note Generation
+
+You can customize how Ollama generates notes by setting `OLLAMA_PROMPT_TEMPLATE` in your `.env` file.
+
+**Option 1: Inline prompt (simple)**
+```bash
+OLLAMA_PROMPT_TEMPLATE="You are a meeting note taker. Create bullet-point notes from this transcript. Audio: {audio_filename} Transcript: {transcription_text}"
+```
+
+**Option 2: External file (recommended for complex prompts)**
+```bash
+# Create a custom prompt file
+cat > /path/to/my_prompt.txt << 'EOF'
+You are an expert note taker.
+
+Create detailed notes with:
+- Key discussion points
+- Action items
+- Decisions made
+
+Audio file: {audio_filename}
+Transcript: {transcription_text}
+EOF
+
+# Reference it in .env
+OLLAMA_PROMPT_TEMPLATE=$(cat /path/to/my_prompt.txt)
+```
+
+**Available placeholders:**
+- `{audio_filename}` - Name of the audio file
+- `{transcription_text}` - Full transcript with speaker labels (if enabled)
+- `{has_speakers}` - "true" or "false" indicating if speaker diarization is enabled
+
+**Example template:** See `prompt_template_example.txt` for the default prompt structure.
+
+**Leave empty** to use the built-in default prompt (optimized for technical sales calls).
 
 ## Usage
 
