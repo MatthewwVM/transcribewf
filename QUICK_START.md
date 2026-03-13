@@ -175,6 +175,5 @@ HUGGINGFACE_TOKEN=hf_your_token_here
 ## Documentation
 
 - **README.md** - Full documentation
-- **WHISPERX_SETUP.md** - WhisperX setup and troubleshooting
 - **.env.example** - All configuration options with detailed comments
 

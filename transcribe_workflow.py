@@ -29,21 +29,60 @@ def load_env_file():
     env_file = Path(__file__).parent / '.env'
     if env_file.exists():
         with open(env_file) as f:
-            for line in f:
-                line = line.strip()
-                # Skip comments and empty lines
-                if line and not line.startswith('#'):
-                    # Handle key=value pairs
-                    if '=' in line:
-                        key, value = line.split('=', 1)
-                        key = key.strip()
-                        value = value.strip()
-                        # Remove quotes if present
-                        if value.startswith('"') and value.endswith('"'):
-                            value = value[1:-1]
-                        elif value.startswith("'") and value.endswith("'"):
-                            value = value[1:-1]
-                        os.environ[key] = value
+            lines = f.readlines()
+
+        i = 0
+        while i < len(lines):
+            line = lines[i].strip()
+
+            # Skip comments and empty lines
+            if not line or line.startswith('#'):
+                i += 1
+                continue
+
+            # Handle key=value pairs
+            if '=' in line:
+                key, value = line.split('=', 1)
+                key = key.strip()
+                value = value.strip()
+
+                # Handle multi-line quoted strings
+                if value.startswith('"') and not value.endswith('"'):
+                    # Multi-line string - collect until closing quote
+                    full_value = value[1:]  # Remove opening quote
+                    i += 1
+                    while i < len(lines):
+                        next_line = lines[i].rstrip('\n')
+                        if next_line.endswith('"'):
+                            full_value += '\n' + next_line[:-1]  # Remove closing quote
+                            break
+                        else:
+                            full_value += '\n' + next_line
+                        i += 1
+                    value = full_value
+                elif value.startswith("'") and not value.endswith("'"):
+                    # Multi-line string with single quotes
+                    full_value = value[1:]  # Remove opening quote
+                    i += 1
+                    while i < len(lines):
+                        next_line = lines[i].rstrip('\n')
+                        if next_line.endswith("'"):
+                            full_value += '\n' + next_line[:-1]  # Remove closing quote
+                            break
+                        else:
+                            full_value += '\n' + next_line
+                        i += 1
+                    value = full_value
+                else:
+                    # Single-line value - remove quotes if present
+                    if value.startswith('"') and value.endswith('"'):
+                        value = value[1:-1]
+                    elif value.startswith("'") and value.endswith("'"):
+                        value = value[1:-1]
+
+                os.environ[key] = value
+
+            i += 1
 
 # Load .env file
 load_env_file()

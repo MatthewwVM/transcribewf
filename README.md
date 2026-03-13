@@ -183,9 +183,7 @@ OLLAMA_PROMPT_TEMPLATE=$(cat /path/to/my_prompt.txt)
 - `{transcription_text}` - Full transcript with speaker labels (if enabled)
 - `{has_speakers}` - "true" or "false" indicating if speaker diarization is enabled
 
-**Example template:** See `prompt_template_example.txt` for the default prompt structure.
-
-**Leave empty** to use the built-in default prompt (optimized for technical sales calls).
+**Leave empty** to use the built-in default prompt (optimized for technical sales calls with hierarchical structure, quantitative data preservation, and speaker distinction).
 
 ## Usage
 
@@ -278,8 +276,6 @@ tail -f /var/log/transcribe_workflow.log
 ## Additional Documentation
 
 - **[QUICK_START.md](QUICK_START.md)** - Fast setup guide with configuration presets
-- **[WHISPERX_SETUP.md](WHISPERX_SETUP.md)** - Detailed WhisperX and speaker diarization setup
-- **[PROMPT_ENGINEERING.md](PROMPT_ENGINEERING.md)** - Guide to optimizing Ollama note generation
 
 ## License
 
