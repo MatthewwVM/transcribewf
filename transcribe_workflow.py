@@ -514,18 +514,69 @@ def main():
             model = whisper.load_model(WHISPER_MODEL)
             logger.info("Whisper model loaded successfully")
 
-        # Process each audio file
-        success_count = 0
-        error_count = 0
+        # ============================================
+        # PASS 1: Transcribe all audio files
+        # ============================================
+        logger.info("=" * 80)
+        logger.info("PASS 1: Transcribing all audio files")
+        logger.info("=" * 80)
+
+        transcription_results = {}  # Store results: {audio_file: transcription_result}
+        transcription_count = 0
+        transcription_errors = 0
 
         for audio_file in audio_files:
             try:
-                # Transcribe audio
+                logger.info(f"Transcribing: {audio_file}")
                 transcription_result = transcribe_audio(audio_file, model)
 
                 if transcription_result is None:
-                    error_count += 1
+                    transcription_errors += 1
                     continue
+
+                # Store the result for Pass 2
+                transcription_results[audio_file] = transcription_result
+                transcription_count += 1
+                logger.info(f"✓ Transcription complete ({transcription_count}/{len(audio_files)})")
+
+            except Exception as e:
+                logger.error(f"Error transcribing {audio_file}: {str(e)}")
+                transcription_errors += 1
+
+        logger.info("=" * 80)
+        logger.info(f"PASS 1 Complete: {transcription_count} transcribed, {transcription_errors} errors")
+        logger.info("=" * 80)
+
+        # ============================================
+        # GPU Memory Cleanup: Unload Whisper model
+        # ============================================
+        logger.info("Unloading Whisper model and clearing GPU memory...")
+        del model
+
+        # Clear CUDA cache if using GPU
+        try:
+            import torch
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+                torch.cuda.synchronize()
+                logger.info("✓ GPU memory cleared successfully")
+        except Exception as e:
+            logger.warning(f"Could not clear GPU cache: {str(e)}")
+
+        # ============================================
+        # PASS 2: Generate notes with Ollama
+        # ============================================
+        logger.info("=" * 80)
+        logger.info("PASS 2: Generating AI notes with Ollama")
+        logger.info("=" * 80)
+
+        success_count = 0
+        error_count = 0
+        note_count = 0
+
+        for audio_file, transcription_result in transcription_results.items():
+            try:
+                logger.info(f"Generating notes for: {Path(audio_file).name}")
 
                 # Generate markdown note with Ollama
                 markdown_note = generate_markdown_with_ollama(
@@ -536,13 +587,17 @@ def main():
                 # Save results
                 save_transcription(audio_file, transcription_result, markdown_note)
                 success_count += 1
+                note_count += 1
+                logger.info(f"✓ Notes generated ({note_count}/{len(transcription_results)})")
 
             except Exception as e:
-                logger.error(f"Error processing {audio_file}: {str(e)}")
+                logger.error(f"Error generating notes for {audio_file}: {str(e)}")
                 error_count += 1
 
         logger.info("=" * 80)
-        logger.info(f"Workflow completed: {success_count} successful, {error_count} errors")
+        logger.info(f"PASS 2 Complete: {success_count} notes generated, {error_count} errors")
+        logger.info("=" * 80)
+        logger.info(f"Overall: {success_count} files fully processed")
         logger.info("=" * 80)
 
     except Exception as e:
