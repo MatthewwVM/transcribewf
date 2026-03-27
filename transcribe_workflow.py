@@ -175,7 +175,7 @@ def unmount_nfs():
 
 def get_audio_files():
     """Get list of audio files to transcribe."""
-    audio_extensions = ['*.mp3', '*.wav', '*.m4a', '*.flac', '*.ogg', '*.opus', '*.aac']
+    audio_extensions = ['*.mp3', '*.wav', '*.m4a', '*.mp4', '*.flac', '*.ogg', '*.opus', '*.aac']
     audio_files = []
     
     for ext in audio_extensions:
