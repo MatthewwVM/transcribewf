@@ -96,6 +96,7 @@ SOURCE_DIR = os.path.join(MOUNT_POINT, SOURCE_FOLDER)
 DEST_DIR = os.path.join(MOUNT_POINT, DEST_FOLDER)
 LOG_FILE = os.getenv('LOG_FILE', '/var/log/transcribe_workflow.log')
 WHISPER_MODEL = os.getenv('WHISPER_MODEL', 'base')
+LANGUAGE = os.getenv('LANGUAGE', 'en')
 OLLAMA_MODEL = os.getenv('OLLAMA_MODEL', 'llama2')
 LOG_LEVEL = os.getenv('LOG_LEVEL', 'INFO')
 ENABLE_OLLAMA = os.getenv('ENABLE_OLLAMA', 'true').lower() in ('true', '1', 'yes')
@@ -194,7 +195,10 @@ def transcribe_audio(audio_file, model, device="cpu"):
             logger.info("Using WhisperX for transcription")
 
             # Transcribe with WhisperX
-            result = model.transcribe(audio_file, batch_size=16)
+            transcribe_kwargs = {'batch_size': 16}
+            if LANGUAGE:
+                transcribe_kwargs['language'] = LANGUAGE
+            result = model.transcribe(audio_file, **transcribe_kwargs)
 
             # Align whisper output for better timestamps
             model_a, metadata = whisperx.load_align_model(
@@ -237,7 +241,10 @@ def transcribe_audio(audio_file, model, device="cpu"):
         else:
             # Use vanilla Whisper
             logger.info("Using vanilla Whisper for transcription")
-            result = model.transcribe(audio_file, verbose=False)
+            transcribe_kwargs = {'verbose': False}
+            if LANGUAGE:
+                transcribe_kwargs['language'] = LANGUAGE
+            result = model.transcribe(audio_file, **transcribe_kwargs)
             logger.info(f"Transcription completed for: {audio_file}")
             return result
 
@@ -466,6 +473,7 @@ def main():
     logger.info(f"  Source Directory: {SOURCE_DIR}")
     logger.info(f"  Destination Directory: {DEST_DIR}")
     logger.info(f"  Whisper Model: {WHISPER_MODEL}")
+    logger.info(f"  Language: {LANGUAGE if LANGUAGE else 'auto-detect'}")
     logger.info(f"  Use WhisperX: {USE_WHISPERX}")
     if USE_WHISPERX:
         logger.info(f"  Speaker Diarization: {ENABLE_SPEAKER_DIARIZATION}")
