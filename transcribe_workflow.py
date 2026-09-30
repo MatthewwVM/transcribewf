@@ -9,6 +9,7 @@ import sys
 import subprocess
 import json
 import logging
+import re
 from pathlib import Path
 from datetime import datetime
 import whisper
@@ -294,6 +295,26 @@ def format_whisperx_output(result):
     return '\n\n'.join(formatted_lines)
 
 
+def clean_ollama_markdown(text):
+    """Make the model output render as native markdown (e.g. in Obsidian).
+
+    Reasoning models (qwen3, etc.) can prepend a thinking block, and many models
+    wrap a "markdown document" answer in a ```markdown ... ``` code fence -- which
+    makes Obsidian render the whole note as one code block. Strip both.
+    """
+    if not text:
+        return text
+    # Strip reasoning: <think>...</think> tags, or ollama's literal Thinking.../...done thinking.
+    text = re.sub(r"<think>.*?</think>", "", text, flags=re.DOTALL)
+    text = re.sub(r"^\s*Thinking\.\.\..*?\.\.\.done thinking\.\s*", "", text, flags=re.DOTALL)
+    text = text.strip()
+    # Unwrap a single outer ```markdown ... ``` (or plain ``` ... ```) fence
+    m = re.match(r"^```[^\n]*\n(.*)\n```$", text, flags=re.DOTALL)
+    if m:
+        text = m.group(1).strip()
+    return text
+
+
 def generate_markdown_with_ollama(transcription_text, audio_filename):
     """Generate a markdown note from transcription using Ollama."""
     if not ENABLE_OLLAMA:
@@ -403,15 +424,19 @@ Transcription:
 Generate comprehensive, well-structured markdown notes following the format above. Be thorough but concise. Focus on actionable intelligence."""
 
     try:
-        # Call Ollama API
-        cmd = f'ollama run {OLLAMA_MODEL} "{prompt}"'
-        success, stdout, stderr = run_command(cmd, check=False)
+        # Call Ollama with thinking disabled (qwen3 etc. are reasoning models).
+        # Pass the prompt on stdin to avoid shell-quoting issues with long transcripts.
+        result = subprocess.run(
+            ["ollama", "run", "--think=false", OLLAMA_MODEL],
+            input=prompt, capture_output=True, text=True
+        )
 
-        if success and stdout:
+        if result.returncode == 0 and result.stdout.strip():
+            note = clean_ollama_markdown(result.stdout)
             logger.info(f"Markdown note generated for: {audio_filename}")
-            return stdout
+            return note
         else:
-            logger.error(f"Failed to generate markdown: {stderr}")
+            logger.error(f"Failed to generate markdown: {result.stderr}")
             return None
     except Exception as e:
         logger.error(f"Error calling Ollama: {str(e)}")

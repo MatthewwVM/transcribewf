@@ -26,3 +26,6 @@ Thumbs.db
 *.tmp
 *.bak
 
+# Runtime lock for the OneDrive puller
+.onedrive_pull.lock
+
