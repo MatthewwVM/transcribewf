@@ -29,3 +29,6 @@ Thumbs.db
 # Runtime lock for the OneDrive puller
 .onedrive_pull.lock
 
+# Runtime lock for manual-run.sh
+.manual_run.lock
+

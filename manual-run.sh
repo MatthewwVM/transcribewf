@@ -45,6 +45,7 @@ SOURCE_FOLDER="totranscribe"                # queue the pipeline reads
 DEST_FOLDER="transcribed"                   # where finished output ends up
 TRANSCRIBE_SERVICE="transcribe-workflow.service"
 AUDIO_EXTS=(m4a mp3 wav flac ogg opus aac mp4)
+LOCK="$WFDIR/.manual_run.lock"              # serialize manual runs (one GPU)
 # ------------------------------------------------------------------------------
 
 QDIR="$MOUNT_POINT/$SOURCE_FOLDER"
@@ -80,7 +81,15 @@ resolve_one() {
 NAME="${1:-}"
 [ -n "$NAME" ] || die "usage: $(basename "$0") <recording-name>  (with or without .m4a; a unique substring works)"
 
-# Never collide with the scheduled run (same GPU, same queue).
+# Serialize: never let two manual runs fight over the one GPU (an overlap OOMs
+# both and, worse, the second run's cleanup would restore the files the first
+# one set aside). Hold fd 9 for the whole script; released automatically on exit.
+exec 9>"$LOCK" || die "cannot open lock $LOCK"
+if ! flock -n 9; then
+    die "another manual-run.sh is already running (GPU busy) — wait for it to finish."
+fi
+
+# Never collide with the scheduled run either (same GPU, same queue).
 if systemctl is-active --quiet "$TRANSCRIBE_SERVICE"; then
     die "the nightly $TRANSCRIBE_SERVICE is running right now — wait for it to finish."
 fi
